@@ -90,23 +90,47 @@ if [ "$NEEDS_KEY" = true ]; then
     fi
 fi
 
-# ── Step 3b: Pexels API Key (optional) ───
+# ── Step 3b: Image Search (optional) ─────
 echo ""
-step "Checking Pexels API key (optional - enables image search for bots)..."
-if grep -q "^PEXELS_API_KEY=" "server/.env" 2>/dev/null && ! grep -q "^PEXELS_API_KEY=your_pexels" "server/.env" 2>/dev/null; then
-    step "Pexels API key already configured."
-else
-    warn "Without a Pexels key the bots won't be able to search for images."
-    info "Get a free key at: https://www.pexels.com/api/"
-    echo ""
-    read -p "    Enter your Pexels API key (or press Enter to skip): " pexels_key
-    if [ -n "$pexels_key" ]; then
-        echo "PEXELS_API_KEY=$pexels_key" >> server/.env
-        step "Pexels API key saved."
-    else
-        step "Skipping — add PEXELS_API_KEY to server/.env to enable image search later."
-    fi
-fi
+step "Image search setup (optional - lets bots find and share images)..."
+echo ""
+echo -e "${CYAN}  Which image search provider would you like to use?${NC}"
+echo "    1) Pexels  - curated stock photos, 1 key    (pexels.com/api)"
+echo "    2) Google  - broader web results, 2 keys    (console.cloud.google.com)"
+echo "    3) None    - disable image search"
+echo ""
+read -p "    Enter 1, 2, or 3: " img_choice
+
+# Strip any existing image search keys before writing new ones
+tmpfile=$(mktemp)
+grep -v "^PEXELS_API_KEY=\|^GOOGLE_API_KEY=\|^GOOGLE_CX=" server/.env > "$tmpfile" 2>/dev/null
+mv "$tmpfile" server/.env
+
+case "$img_choice" in
+    1)
+        read -p "    Enter your Pexels API key: " pexels_key
+        if [ -n "$pexels_key" ]; then
+            echo "PEXELS_API_KEY=$pexels_key" >> server/.env
+            step "Pexels API key saved."
+        fi
+        ;;
+    2)
+        info "1. Go to programmablesearchengine.google.com and create a search engine"
+        info "2. Enable 'Image search' in its settings and copy the Search Engine ID"
+        info "3. Get an API key from console.cloud.google.com (enable Custom Search API)"
+        echo ""
+        read -p "    Enter your Google API key: " google_key
+        read -p "    Enter your Search Engine ID (cx): " google_cx
+        if [ -n "$google_key" ] && [ -n "$google_cx" ]; then
+            echo "GOOGLE_API_KEY=$google_key" >> server/.env
+            echo "GOOGLE_CX=$google_cx" >> server/.env
+            step "Google Custom Search keys saved."
+        fi
+        ;;
+    *)
+        step "Image search disabled."
+        ;;
+esac
 
 # ── Step 4: Free ports ───────────────────
 step "Checking for processes on ports 3000 and 3001..."

@@ -88,23 +88,44 @@ if ($needsKey) {
     }
 }
 
-# ── Step 3b: Pexels API Key (optional) ───
+# ── Step 3b: Image Search (optional) ─────
 Write-Host ""
-Step "Checking Pexels API key (optional - enables image search for bots)..."
-$envContent = Get-Content $envFile -Raw -ErrorAction SilentlyContinue
-$hasPexels = $envContent -match 'PEXELS_API_KEY=\S+' -and $envContent -notmatch 'PEXELS_API_KEY=your_'
-if ($hasPexels) {
-    Step "Pexels API key already configured."
-} else {
-    Warn "Without a Pexels key the bots won't be able to search for images."
-    Info "Get a free key at: https://www.pexels.com/api/"
-    Write-Host ""
-    $pexelsKey = Read-Host "    Enter your Pexels API key (or press Enter to skip)"
-    if (-not [string]::IsNullOrWhiteSpace($pexelsKey)) {
-        Add-Content -Path $envFile -Value "PEXELS_API_KEY=$($pexelsKey.Trim())"
-        Step "Pexels API key saved."
-    } else {
-        Step "Skipping - add PEXELS_API_KEY to server\.env to enable image search later."
+Step "Image search setup (optional - lets bots find and share images)..."
+Write-Host ""
+Write-Host "  Which image search provider would you like to use?" -ForegroundColor Cyan
+Write-Host "    [1] Pexels  - curated stock photos, 1 key    (pexels.com/api)" -ForegroundColor White
+Write-Host "    [2] Google  - broader web results, 2 keys    (console.cloud.google.com)" -ForegroundColor White
+Write-Host "    [3] None    - disable image search" -ForegroundColor White
+Write-Host ""
+$imgChoice = Read-Host "    Enter 1, 2, or 3"
+
+# Strip any existing image search keys before writing new ones
+$lines = Get-Content $envFile | Where-Object { $_ -notmatch '^(PEXELS_API_KEY|GOOGLE_API_KEY|GOOGLE_CX)=' }
+Set-Content -Path $envFile -Value $lines -Encoding utf8
+
+switch ($imgChoice) {
+    "1" {
+        $pexelsKey = Read-Host "    Enter your Pexels API key"
+        if (-not [string]::IsNullOrWhiteSpace($pexelsKey)) {
+            Add-Content -Path $envFile -Value "PEXELS_API_KEY=$($pexelsKey.Trim())"
+            Step "Pexels API key saved."
+        }
+    }
+    "2" {
+        Info "1. Go to programmablesearchengine.google.com and create a search engine"
+        Info "2. Enable 'Image search' in its settings and copy the Search Engine ID"
+        Info "3. Get an API key from console.cloud.google.com (enable Custom Search API)"
+        Write-Host ""
+        $googleKey = Read-Host "    Enter your Google API key"
+        $googleCx  = Read-Host "    Enter your Search Engine ID (cx)"
+        if (-not [string]::IsNullOrWhiteSpace($googleKey) -and -not [string]::IsNullOrWhiteSpace($googleCx)) {
+            Add-Content -Path $envFile -Value "GOOGLE_API_KEY=$($googleKey.Trim())"
+            Add-Content -Path $envFile -Value "GOOGLE_CX=$($googleCx.Trim())"
+            Step "Google Custom Search keys saved."
+        }
+    }
+    default {
+        Step "Image search disabled."
     }
 }
 

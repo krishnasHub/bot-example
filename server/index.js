@@ -3,7 +3,7 @@ import cors from 'cors';
 import Anthropic from '@anthropic-ai/sdk';
 import dotenv from 'dotenv';
 import { getPublicBotInfo, getBotById, bots } from './bots.js';
-import { searchImage } from './imageSearch.js';
+import { searchImage, imageSearchEnabled } from './imageSearch.js';
 
 dotenv.config();
 
@@ -31,9 +31,6 @@ const IMAGE_SEARCH_TOOL = {
     required: ['query']
   }
 };
-
-const imageSearchEnabled = () =>
-  process.env.PEXELS_API_KEY && !process.env.PEXELS_API_KEY.startsWith('your_');
 
 // GET /api/bots - returns public bot info
 app.get('/api/bots', (req, res) => {
@@ -133,6 +130,8 @@ app.post('/api/chat/next-speaker', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
   if (imageSearchEnabled()) {
-    console.log('Image search enabled (Pexels)');
+    const provider = process.env.GOOGLE_API_KEY && !process.env.GOOGLE_API_KEY.startsWith('your_')
+      ? 'Google Custom Search' : 'Pexels';
+    console.log(`Image search enabled (${provider})`);
   }
 });

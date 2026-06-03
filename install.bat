@@ -112,29 +112,38 @@ if "!NEEDS_KEY!"=="1" (
 echo.
 echo [+] Checking Pexels API key (optional - enables image search for bots)...
 
-set NEEDS_PEXELS=1
-if exist "server\.env" (
-    findstr /b "PEXELS_API_KEY=" "server\.env" >nul 2>&1
-    if %errorlevel% equ 0 (
-        findstr /b "PEXELS_API_KEY=your_pexels" "server\.env" >nul 2>&1
-        if %errorlevel% neq 0 (
-            echo [+] Pexels API key already configured.
-            set NEEDS_PEXELS=0
-        )
-    )
-)
+echo.
+echo   Which image search provider would you like to use?
+echo     1^) Pexels  - curated stock photos, 1 key    ^(pexels.com/api^)
+echo     2^) Google  - broader web results, 2 keys    ^(console.cloud.google.com^)
+echo     3^) None    - disable image search
+echo.
+set /p IMG_CHOICE=    Enter 1, 2, or 3:
 
-if "!NEEDS_PEXELS!"=="1" (
-    echo [!] Without a Pexels key the bots won't be able to search for images.
-    echo     Get a free key at: https://www.pexels.com/api/
-    echo.
-    set /p PEXELS_KEY=    Enter your Pexels API key (or press Enter to skip):
+:: Strip any existing image search keys before writing new ones
+findstr /v /r /c:"^PEXELS_API_KEY=" /c:"^GOOGLE_API_KEY=" /c:"^GOOGLE_CX=" "server\.env" > "server\.env.tmp" 2>nul
+if exist "server\.env.tmp" move /y "server\.env.tmp" "server\.env" >nul
+
+if "!IMG_CHOICE!"=="1" (
+    set /p PEXELS_KEY=    Enter your Pexels API key:
     if not "!PEXELS_KEY!"=="" (
         (echo PEXELS_API_KEY=!PEXELS_KEY!) >> server\.env
         echo [+] Pexels API key saved.
-    ) else (
-        echo [+] Skipping - add PEXELS_API_KEY to server\.env to enable image search later.
     )
+) else if "!IMG_CHOICE!"=="2" (
+    echo     1. Go to programmablesearchengine.google.com and create a search engine
+    echo     2. Enable "Image search" in its settings and copy the Search Engine ID
+    echo     3. Get an API key from console.cloud.google.com ^(enable Custom Search API^)
+    echo.
+    set /p GOOGLE_KEY=    Enter your Google API key:
+    set /p GOOGLE_CX_VAL=    Enter your Search Engine ID ^(cx^):
+    if not "!GOOGLE_KEY!"=="" if not "!GOOGLE_CX_VAL!"=="" (
+        (echo GOOGLE_API_KEY=!GOOGLE_KEY!) >> server\.env
+        (echo GOOGLE_CX=!GOOGLE_CX_VAL!) >> server\.env
+        echo [+] Google Custom Search keys saved.
+    )
+) else (
+    echo [+] Image search disabled.
 )
 
 :: ── Step 4: Free ports ───────────────────
