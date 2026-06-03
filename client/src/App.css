@@ -159,6 +159,20 @@ body {
   line-height: 1.5;
 }
 
+.chat-image {
+  display: block;
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 0.5rem;
+  margin-top: 0.5rem;
+  object-fit: contain;
+  cursor: pointer;
+}
+
+.chat-image:hover {
+  opacity: 0.9;
+}
+
 /* Typing Indicator */
 .typing-indicator {
   display: flex;

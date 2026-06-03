@@ -42,6 +42,18 @@ function App() {
 
   const getRandomDelay = () => Math.floor(Math.random() * 2000) + 1500; // 1.5-3.5s
 
+  const IMAGE_REGEX = /(https?:\/\/[^\s]+\.(?:jpg|jpeg|png|gif|webp|svg|bmp|avif)(?:\?[^\s]*)?)/gi;
+
+  const renderMessageContent = (text) => {
+    const parts = text.split(IMAGE_REGEX);
+    return parts.map((part, i) => {
+      if (/^https?:\/\//i.test(part) && /\.(jpg|jpeg|png|gif|webp|svg|bmp|avif)/i.test(part)) {
+        return <img key={i} src={part} alt="shared image" className="chat-image" />;
+      }
+      return part ? <span key={i}>{part}</span> : null;
+    });
+  };
+
   const conversationLoop = useCallback(async () => {
     while (true) {
       // Wait for random delay
@@ -197,7 +209,7 @@ function App() {
                   </span>
                 </div>
               )}
-              <div className="message-text">{msg.text}</div>
+              <div className="message-text">{renderMessageContent(msg.text)}</div>
             </div>
           ))}
 
