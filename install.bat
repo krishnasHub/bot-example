@@ -108,6 +108,35 @@ if "!NEEDS_KEY!"=="1" (
     )
 )
 
+:: ── Step 3b: Pexels API Key (optional) ───
+echo.
+echo [+] Checking Pexels API key (optional - enables image search for bots)...
+
+set NEEDS_PEXELS=1
+if exist "server\.env" (
+    findstr /b "PEXELS_API_KEY=" "server\.env" >nul 2>&1
+    if %errorlevel% equ 0 (
+        findstr /b "PEXELS_API_KEY=your_pexels" "server\.env" >nul 2>&1
+        if %errorlevel% neq 0 (
+            echo [+] Pexels API key already configured.
+            set NEEDS_PEXELS=0
+        )
+    )
+)
+
+if "!NEEDS_PEXELS!"=="1" (
+    echo [!] Without a Pexels key the bots won't be able to search for images.
+    echo     Get a free key at: https://www.pexels.com/api/
+    echo.
+    set /p PEXELS_KEY=    Enter your Pexels API key (or press Enter to skip):
+    if not "!PEXELS_KEY!"=="" (
+        (echo PEXELS_API_KEY=!PEXELS_KEY!) >> server\.env
+        echo [+] Pexels API key saved.
+    ) else (
+        echo [+] Skipping - add PEXELS_API_KEY to server\.env to enable image search later.
+    )
+)
+
 :: ── Step 4: Free ports ───────────────────
 echo.
 echo [+] Checking for processes on ports 3000 and 3001...

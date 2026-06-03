@@ -90,6 +90,24 @@ if [ "$NEEDS_KEY" = true ]; then
     fi
 fi
 
+# ── Step 3b: Pexels API Key (optional) ───
+echo ""
+step "Checking Pexels API key (optional - enables image search for bots)..."
+if grep -q "^PEXELS_API_KEY=" "server/.env" 2>/dev/null && ! grep -q "^PEXELS_API_KEY=your_pexels" "server/.env" 2>/dev/null; then
+    step "Pexels API key already configured."
+else
+    warn "Without a Pexels key the bots won't be able to search for images."
+    info "Get a free key at: https://www.pexels.com/api/"
+    echo ""
+    read -p "    Enter your Pexels API key (or press Enter to skip): " pexels_key
+    if [ -n "$pexels_key" ]; then
+        echo "PEXELS_API_KEY=$pexels_key" >> server/.env
+        step "Pexels API key saved."
+    else
+        step "Skipping — add PEXELS_API_KEY to server/.env to enable image search later."
+    fi
+fi
+
 # ── Step 4: Free ports ───────────────────
 step "Checking for processes on ports 3000 and 3001..."
 for port in 3000 3001; do

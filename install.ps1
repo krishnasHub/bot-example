@@ -88,6 +88,26 @@ if ($needsKey) {
     }
 }
 
+# ── Step 3b: Pexels API Key (optional) ───
+Write-Host ""
+Step "Checking Pexels API key (optional - enables image search for bots)..."
+$envContent = Get-Content $envFile -Raw -ErrorAction SilentlyContinue
+$hasPexels = $envContent -match 'PEXELS_API_KEY=\S+' -and $envContent -notmatch 'PEXELS_API_KEY=your_'
+if ($hasPexels) {
+    Step "Pexels API key already configured."
+} else {
+    Warn "Without a Pexels key the bots won't be able to search for images."
+    Info "Get a free key at: https://www.pexels.com/api/"
+    Write-Host ""
+    $pexelsKey = Read-Host "    Enter your Pexels API key (or press Enter to skip)"
+    if (-not [string]::IsNullOrWhiteSpace($pexelsKey)) {
+        Add-Content -Path $envFile -Value "PEXELS_API_KEY=$($pexelsKey.Trim())"
+        Step "Pexels API key saved."
+    } else {
+        Step "Skipping - add PEXELS_API_KEY to server\.env to enable image search later."
+    }
+}
+
 # ── Step 4: Free ports ───────────────────
 Write-Host ""
 Step "Checking for processes on ports 3000 and 3001..."

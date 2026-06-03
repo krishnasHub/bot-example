@@ -3,6 +3,7 @@ import cors from 'cors';
 import Anthropic from '@anthropic-ai/sdk';
 import dotenv from 'dotenv';
 import { getPublicBotInfo, getBotById, bots } from './bots.js';
+import { searchImage } from './imageSearch.js';
 
 dotenv.config();
 
@@ -15,6 +16,24 @@ app.use(express.json());
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY
 });
+
+const IMAGE_SEARCH_TOOL = {
+  name: 'search_image',
+  description: 'Search for a relevant image to share in the chat. When this tool returns a URL, include it verbatim in your response text — it will be automatically displayed as an image.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      query: {
+        type: 'string',
+        description: 'Descriptive search query, e.g. "golden sunset mountains" or "excited jumping person"'
+      }
+    },
+    required: ['query']
+  }
+};
+
+const imageSearchEnabled = () =>
+  process.env.PEXELS_API_KEY && !process.env.PEXELS_API_KEY.startsWith('your_');
 
 // GET /api/bots - returns public bot info
 app.get('/api/bots', (req, res) => {
@@ -31,7 +50,6 @@ app.post('/api/chat', async (req, res) => {
       return res.status(400).json({ error: 'Invalid bot ID' });
     }
 
-    // Format conversation history as a transcript
     let transcript;
     if (!messages || messages.length === 0) {
       transcript = '(The group chat just started. Say something to kick off the conversation!)';
@@ -43,16 +61,44 @@ app.post('/api/chat', async (req, res) => {
       transcript += `\n\n(Now respond as ${bot.name}.)`;
     }
 
+    const tools = imageSearchEnabled() ? [IMAGE_SEARCH_TOOL] : [];
+    const userMessages = [{ role: 'user', content: transcript }];
+
     const response = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 256,
+      max_tokens: 512,
       system: bot.systemPrompt,
-      messages: [
-        { role: 'user', content: transcript }
-      ]
+      ...(tools.length && { tools }),
+      messages: userMessages
     });
 
-    const text = response.content[0].text;
+    let text;
+
+    if (response.stop_reason === 'tool_use') {
+      const toolUse = response.content.find(b => b.type === 'tool_use');
+      const imageUrl = await searchImage(toolUse.input.query);
+
+      const toolResult = imageUrl
+        ? `Image found: ${imageUrl} — include this URL verbatim in your response.`
+        : 'No image found for that query.';
+
+      const finalResponse = await anthropic.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 512,
+        system: bot.systemPrompt,
+        tools,
+        messages: [
+          ...userMessages,
+          { role: 'assistant', content: response.content },
+          { role: 'user', content: [{ type: 'tool_result', tool_use_id: toolUse.id, content: toolResult }] }
+        ]
+      });
+
+      text = finalResponse.content.find(b => b.type === 'text')?.text ?? '';
+    } else {
+      text = response.content.find(b => b.type === 'text')?.text ?? '';
+    }
+
     res.json({ text, botId });
   } catch (error) {
     console.error('Chat error:', error);
@@ -64,7 +110,6 @@ app.post('/api/chat', async (req, res) => {
 app.post('/api/chat/next-speaker', (req, res) => {
   const { messages } = req.body;
 
-  // Find the last bot that spoke (if any)
   let lastBotId = null;
   if (messages && messages.length > 0) {
     for (let i = messages.length - 1; i >= 0; i--) {
@@ -75,7 +120,6 @@ app.post('/api/chat/next-speaker', (req, res) => {
     }
   }
 
-  // Filter out the last speaker and pick randomly
   const availableBots = bots.filter(bot => bot.id !== lastBotId);
   const nextBot = availableBots[Math.floor(Math.random() * availableBots.length)];
 
@@ -84,4 +128,7 @@ app.post('/api/chat/next-speaker', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
+  if (imageSearchEnabled()) {
+    console.log('Image search enabled (Pexels)');
+  }
 });
