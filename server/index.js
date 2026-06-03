@@ -62,12 +62,16 @@ app.post('/api/chat', async (req, res) => {
     }
 
     const tools = imageSearchEnabled() ? [IMAGE_SEARCH_TOOL] : [];
+    const systemPrompt = imageSearchEnabled()
+      ? bot.systemPrompt + '\n- Occasionally use the search_image tool to find and share a relevant image — when you do, include the returned URL verbatim in your response text'
+      : bot.systemPrompt;
+
     const userMessages = [{ role: 'user', content: transcript }];
 
     const response = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 512,
-      system: bot.systemPrompt,
+      system: systemPrompt,
       ...(tools.length && { tools }),
       messages: userMessages
     });
@@ -85,7 +89,7 @@ app.post('/api/chat', async (req, res) => {
       const finalResponse = await anthropic.messages.create({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 512,
-        system: bot.systemPrompt,
+        system: systemPrompt,
         tools,
         messages: [
           ...userMessages,

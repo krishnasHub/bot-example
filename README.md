@@ -11,11 +11,22 @@ A real-time group chat where four AI bots autonomously converse with each other 
 | 🌑 Shadow | Dry and sardonic — deadpan humor, perpetually unimpressed |
 | 🎉 Bubbles | Relentlessly cheerful — celebrates everything, even Shadow |
 
+## Features
+
+- Bots converse autonomously in real time, each with a distinct personality
+- Jump in at any time by typing a message — bots will acknowledge you
+- Pause and resume the conversation
+- Images shared in chat (by bots or users) are rendered inline — never shown as raw URLs
+- Multiple images in a single message are displayed side by side in a scrollable row
+- Click any image to open it full size in a new tab
+- **Optional:** bots can search the web for images to express themselves ([requires Pexels API key](#image-search-pexels))
+
 ## Tech Stack
 
 - **Frontend:** React + Vite
 - **Backend:** Node.js + Express
-- **AI:** Anthropic Claude API
+- **AI:** Anthropic Claude API (claude-haiku-4-5)
+- **Image search:** Pexels API (optional)
 
 ---
 
@@ -28,7 +39,7 @@ git clone https://github.com/krishnasHub/bot-example.git
 cd bot-example
 ```
 
-Then run the setup script for your platform. It will check for Node.js (installing it if needed), install all dependencies, prompt for your API key, and launch the app.
+Then run the setup script for your platform. It checks for Node.js (installing it if needed), installs all dependencies, prompts for API keys, and launches the app.
 
 ### Mac / Linux
 
@@ -48,20 +59,27 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 
 ### Windows — Command Prompt
 
-If you're not sure what PowerShell is, use this instead. Double-click `install.bat`, or run it from Command Prompt:
-
 ```cmd
 install.bat
 ```
 
 ---
 
-Once running, open **http://localhost:3000** in your browser.  
-Press `Ctrl+C` in the terminal to stop — the script will automatically clean up the servers.
+The script will:
+1. Check if Node.js is installed — and install it if not
+2. Install all dependencies
+3. Prompt for your [Anthropic API key](https://console.anthropic.com) *(required)*
+4. Prompt for your [Pexels API key](https://www.pexels.com/api/) *(optional — enables image search for bots)*
+5. Open your browser automatically once the server is ready
 
-### Stopping the servers manually
+If the browser doesn't open, go to **http://localhost:3000**.  
+Press `Ctrl+C` to stop — servers are cleaned up automatically.
 
-If you need to stop the servers from a separate terminal:
+---
+
+## Stopping the servers manually
+
+If you need to stop from a separate terminal:
 
 | Platform | Command |
 |----------|---------|
@@ -71,12 +89,20 @@ If you need to stop the servers from a separate terminal:
 
 ---
 
-## What the install script does
+## Configuration
 
-1. Checks if Node.js is installed — installs it automatically if not
-2. Installs all project dependencies
-3. Asks for your [Anthropic API key](https://console.anthropic.com) and saves it
-4. Starts the app
+Both keys live in `server/.env` (never committed to git):
+
+```
+ANTHROPIC_API_KEY=your_key_here   # required
+PEXELS_API_KEY=your_key_here      # optional
+```
+
+### Image search (Pexels)
+
+When a Pexels API key is present, bots gain a `search_image` tool they can call mid-conversation to find and share relevant images. Without the key, image search is fully disabled — bots won't try to use the tool and no image-related instructions are added to their prompts.
+
+Get a free Pexels key at [pexels.com/api](https://www.pexels.com/api/) (no credit card required).
 
 ---
 
@@ -93,14 +119,15 @@ If you'd prefer to set things up yourself:
    npm install --prefix client
    ```
 
-3. Copy the example env file and add your API key:
+3. Copy the example env file and fill in your keys:
    ```bash
    cp server/.env.example server/.env   # Mac/Linux
    copy server\.env.example server\.env  # Windows
    ```
    Edit `server/.env`:
    ```
-   ANTHROPIC_API_KEY=your_api_key_here
+   ANTHROPIC_API_KEY=your_anthropic_key
+   PEXELS_API_KEY=your_pexels_key       # optional
    ```
 
 4. Start the app:
