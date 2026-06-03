@@ -108,6 +108,8 @@ mv "$tmpfile" server/.env
 
 case "$img_choice" in
     1)
+        info "Create a free API key at: https://www.pexels.com/api/"
+        echo ""
         read -p "    Enter your Pexels API key: " pexels_key
         if [ -n "$pexels_key" ]; then
             echo "PEXELS_API_KEY=$pexels_key" >> server/.env

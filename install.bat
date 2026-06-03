@@ -125,6 +125,8 @@ findstr /v /r /c:"^PEXELS_API_KEY=" /c:"^GOOGLE_API_KEY=" /c:"^GOOGLE_CX=" "serv
 if exist "server\.env.tmp" move /y "server\.env.tmp" "server\.env" >nul
 
 if "!IMG_CHOICE!"=="1" (
+    echo     Create a free API key at: https://www.pexels.com/api/
+    echo.
     set /p PEXELS_KEY=    Enter your Pexels API key:
     if not "!PEXELS_KEY!"=="" (
         (echo PEXELS_API_KEY=!PEXELS_KEY!) >> server\.env

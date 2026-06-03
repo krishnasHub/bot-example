@@ -105,6 +105,8 @@ Set-Content -Path $envFile -Value $lines -Encoding utf8
 
 switch ($imgChoice) {
     "1" {
+        Info "Create a free API key at: https://www.pexels.com/api/"
+        Write-Host ""
         $pexelsKey = Read-Host "    Enter your Pexels API key"
         if (-not [string]::IsNullOrWhiteSpace($pexelsKey)) {
             Add-Content -Path $envFile -Value "PEXELS_API_KEY=$($pexelsKey.Trim())"
