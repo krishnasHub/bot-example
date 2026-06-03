@@ -125,9 +125,13 @@ echo.
 echo [+] Starting server...  http://localhost:3001
 echo [+] Starting client...  http://localhost:3000
 echo.
-echo     Open http://localhost:3000 in your browser to use the app.
+echo     Opening your browser automatically in a few seconds...
+echo     If it does not open, go to: http://localhost:3000
 echo     Press Ctrl+C to stop.
 echo.
+
+:: Open browser after a short delay (runs in background while npm starts)
+start "" cmd /c "timeout /t 5 /nobreak > nul && start http://localhost:3000"
 
 call npm run dev
 

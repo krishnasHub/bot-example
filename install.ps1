@@ -107,9 +107,22 @@ Write-Host ""
 Step "Starting server...  http://localhost:3001"
 Step "Starting client...  http://localhost:3000"
 Write-Host ""
-Info "Open http://localhost:3000 in your browser to use the app."
+Info "Opening your browser automatically once the server is ready..."
+Info "If it does not open, go to: http://localhost:3000"
 Info "Press Ctrl+C to stop."
 Write-Host ""
+
+# Poll in background until the server responds, then open the browser
+$null = Start-Job -ScriptBlock {
+    for ($i = 0; $i -lt 30; $i++) {
+        Start-Sleep -Milliseconds 500
+        try {
+            $null = Invoke-WebRequest -Uri "http://localhost:3001/api/bots" -UseBasicParsing -TimeoutSec 1 -ErrorAction Stop
+            Start-Process "http://localhost:3000"
+            return
+        } catch { }
+    }
+}
 
 try {
     npm run dev

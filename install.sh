@@ -109,9 +109,25 @@ echo ""
 step "Starting server...  http://localhost:3001"
 step "Starting client...  http://localhost:3000"
 echo ""
-info "Open http://localhost:3000 in your browser to use the app."
+info "Opening your browser automatically once the server is ready..."
+info "If it does not open, go to: http://localhost:3000"
 info "Press Ctrl+C to stop."
 echo ""
+
+# Poll in background until the server responds, then open the browser
+(
+    for i in $(seq 1 30); do
+        sleep 0.5
+        if curl -s http://localhost:3001/api/bots >/dev/null 2>&1; then
+            if [[ "$OSTYPE" == "darwin"* ]]; then
+                open "http://localhost:3000"
+            else
+                xdg-open "http://localhost:3000" 2>/dev/null || true
+            fi
+            break
+        fi
+    done
+) &
 
 cleanup() {
     echo ""
