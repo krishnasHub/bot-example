@@ -111,4 +111,15 @@ Info "Open http://localhost:3000 in your browser to use the app."
 Info "Press Ctrl+C to stop."
 Write-Host ""
 
-npm run dev
+try {
+    npm run dev
+} finally {
+    Write-Host ""
+    Step "Shutting down servers..."
+    $pids = Get-NetTCPConnection -LocalPort 3000,3001 -ErrorAction SilentlyContinue |
+            Select-Object -ExpandProperty OwningProcess | Sort-Object -Unique
+    if ($pids) {
+        $pids | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }
+    }
+    Step "Servers stopped. Goodbye!"
+}

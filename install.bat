@@ -130,3 +130,11 @@ echo     Press Ctrl+C to stop.
 echo.
 
 call npm run dev
+
+:: Runs when npm exits normally, or if user answers N to "Terminate batch job?"
+echo.
+echo [+] Shutting down servers...
+for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":3000 \|:3001 "') do (
+    taskkill /PID %%p /F >nul 2>&1
+)
+echo [+] Servers stopped. Goodbye!

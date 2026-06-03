@@ -57,7 +57,17 @@ install.bat
 ---
 
 Once running, open **http://localhost:3000** in your browser.  
-Press `Ctrl+C` in the terminal to stop the app.
+Press `Ctrl+C` in the terminal to stop — the script will automatically clean up the servers.
+
+### Stopping the servers manually
+
+If you need to stop the servers from a separate terminal:
+
+| Platform | Command |
+|----------|---------|
+| Mac / Linux | `./stop.sh` |
+| Windows PowerShell | `.\stop.ps1` |
+| Windows Command Prompt | `stop.bat` |
 
 ---
 

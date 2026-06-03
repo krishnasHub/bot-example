@@ -113,4 +113,16 @@ info "Open http://localhost:3000 in your browser to use the app."
 info "Press Ctrl+C to stop."
 echo ""
 
+cleanup() {
+    echo ""
+    step "Shutting down servers..."
+    for port in 3000 3001; do
+        pid=$(lsof -ti tcp:$port 2>/dev/null)
+        [ -n "$pid" ] && kill $pid 2>/dev/null
+    done
+    step "Servers stopped. Goodbye!"
+    exit 0
+}
+trap cleanup INT TERM
+
 npm run dev
