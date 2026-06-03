@@ -1,6 +1,4 @@
-# ─────────────────────────────────────────
-#   Bot Group Chat — Setup Script (Windows)
-# ─────────────────────────────────────────
+# Bot Group Chat - Setup Script (Windows PowerShell)
 
 $ErrorActionPreference = "Stop"
 
@@ -10,9 +8,9 @@ function Err($msg)   { Write-Host "[x] $msg" -ForegroundColor Red }
 function Info($msg)  { Write-Host "    $msg" -ForegroundColor Cyan }
 
 Write-Host ""
-Write-Host "╔══════════════════════════════════════╗" -ForegroundColor Cyan
-Write-Host "║     Bot Group Chat - Setup Script    ║" -ForegroundColor Cyan
-Write-Host "╚══════════════════════════════════════╝" -ForegroundColor Cyan
+Write-Host "======================================" -ForegroundColor Cyan
+Write-Host "  Bot Group Chat - Setup Script" -ForegroundColor Cyan
+Write-Host "======================================" -ForegroundColor Cyan
 Write-Host ""
 
 # ── Step 1: Node.js ───────────────────────
@@ -92,9 +90,9 @@ if ($needsKey) {
 
 # ── Step 4: Launch ────────────────────────
 Write-Host ""
-Write-Host "╔══════════════════════════════════════╗" -ForegroundColor Cyan
-Write-Host "║         Setup complete! Launching    ║" -ForegroundColor Cyan
-Write-Host "╚══════════════════════════════════════╝" -ForegroundColor Cyan
+Write-Host "======================================" -ForegroundColor Cyan
+Write-Host "  Setup complete! Launching..." -ForegroundColor Cyan
+Write-Host "======================================" -ForegroundColor Cyan
 Write-Host ""
 Step "Starting server...  http://localhost:3001"
 Step "Starting client...  http://localhost:3000"
