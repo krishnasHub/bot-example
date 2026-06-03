@@ -90,7 +90,17 @@ if [ "$NEEDS_KEY" = true ]; then
     fi
 fi
 
-# ── Step 4: Launch ────────────────────────
+# ── Step 4: Free ports ───────────────────
+step "Checking for processes on ports 3000 and 3001..."
+for port in 3000 3001; do
+    pid=$(lsof -ti tcp:$port 2>/dev/null)
+    if [ -n "$pid" ]; then
+        kill -9 $pid 2>/dev/null
+    fi
+done
+step "Ports cleared."
+
+# ── Step 5: Launch ────────────────────────
 echo ""
 echo -e "${CYAN}╔══════════════════════════════════════╗${NC}"
 echo -e "${CYAN}║         Setup complete! Launching    ║${NC}"

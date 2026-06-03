@@ -88,7 +88,17 @@ if ($needsKey) {
     }
 }
 
-# ── Step 4: Launch ────────────────────────
+# ── Step 4: Free ports ───────────────────
+Write-Host ""
+Step "Checking for processes on ports 3000 and 3001..."
+$pids = Get-NetTCPConnection -LocalPort 3000,3001 -ErrorAction SilentlyContinue |
+        Select-Object -ExpandProperty OwningProcess | Sort-Object -Unique
+if ($pids) {
+    $pids | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }
+    Step "Cleared existing processes on ports 3000/3001."
+}
+
+# ── Step 5: Launch ────────────────────────
 Write-Host ""
 Write-Host "======================================" -ForegroundColor Cyan
 Write-Host "  Setup complete! Launching..." -ForegroundColor Cyan

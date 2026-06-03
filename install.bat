@@ -108,7 +108,15 @@ if "!NEEDS_KEY!"=="1" (
     )
 )
 
-:: ── Step 4: Launch ────────────────────────
+:: ── Step 4: Free ports ───────────────────
+echo.
+echo [+] Checking for processes on ports 3000 and 3001...
+for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":3000 \|:3001 "') do (
+    taskkill /PID %%p /F >nul 2>&1
+)
+echo [+] Ports cleared.
+
+:: ── Step 5: Launch ────────────────────────
 echo.
 echo ========================================
 echo   Setup complete! Launching...
