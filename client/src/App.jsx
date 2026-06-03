@@ -1,5 +1,37 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
+const IMAGE_REGEX = /https?:\/\/[^\s]+\.(?:jpg|jpeg|png|gif|webp|svg|bmp|avif)(?:\?[^\s]*)?/gi;
+
+const parseMessageParts = (text) => {
+  const imageUrls = [];
+  const remaining = text
+    .replace(new RegExp(IMAGE_REGEX.source, 'gi'), (url) => {
+      imageUrls.push(url);
+      return '';
+    })
+    .replace(/\s+/g, ' ')
+    .trim();
+  return { text: remaining, imageUrls };
+};
+
+const ChatImage = ({ src }) => {
+  const [orientation, setOrientation] = useState(null);
+
+  return (
+    <a href={src} target="_blank" rel="noopener noreferrer">
+      <img
+        src={src}
+        alt="shared image"
+        className={`chat-image${orientation ? ` chat-image--${orientation}` : ''}`}
+        onLoad={(e) => {
+          const { naturalWidth, naturalHeight } = e.target;
+          setOrientation(naturalWidth >= naturalHeight ? 'landscape' : 'portrait');
+        }}
+      />
+    </a>
+  );
+};
+
 function App() {
   const [bots, setBots] = useState([]);
   const [messages, setMessages] = useState([]);
@@ -40,26 +72,12 @@ function App() {
       .catch(console.error);
   }, []);
 
-  const getRandomDelay = () => Math.floor(Math.random() * 2000) + 1500; // 1.5-3.5s
-
-  const IMAGE_REGEX = /(https?:\/\/[^\s]+\.(?:jpg|jpeg|png|gif|webp|svg|bmp|avif)(?:\?[^\s]*)?)/gi;
-
-  const renderMessageContent = (text) => {
-    const parts = text.split(IMAGE_REGEX);
-    return parts.map((part, i) => {
-      if (/^https?:\/\//i.test(part) && /\.(jpg|jpeg|png|gif|webp|svg|bmp|avif)/i.test(part)) {
-        return <img key={i} src={part} alt="shared image" className="chat-image" />;
-      }
-      return part ? <span key={i}>{part}</span> : null;
-    });
-  };
+  const getRandomDelay = () => Math.floor(Math.random() * 2000) + 1500;
 
   const conversationLoop = useCallback(async () => {
     while (true) {
-      // Wait for random delay
       await new Promise(resolve => setTimeout(resolve, getRandomDelay()));
 
-      // Check if still running
       if (!isRunningRef.current) {
         await new Promise(resolve => {
           const check = setInterval(() => {
@@ -71,7 +89,6 @@ function App() {
         });
       }
 
-      // Circuit breaker check
       if (failCountRef.current >= 3) {
         console.log('Circuit breaker triggered - stopping loop');
         setIsRunning(false);
@@ -79,7 +96,6 @@ function App() {
       }
 
       try {
-        // Get next speaker
         const speakerRes = await fetch('/api/chat/next-speaker', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -87,28 +103,20 @@ function App() {
         });
         const { botId } = await speakerRes.json();
 
-        // Show typing indicator
         setIsTyping(true);
         setTypingBot(botId);
 
-        // Get bot response
         const chatRes = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            messages: messagesRef.current,
-            botId
-          })
+          body: JSON.stringify({ messages: messagesRef.current, botId })
         });
 
         if (!chatRes.ok) throw new Error('Chat request failed');
 
         const { text } = await chatRes.json();
-
-        // Find bot info
         const bot = bots.find(b => b.id === botId);
 
-        // Add message
         setMessages(prev => [...prev, {
           id: Date.now(),
           botId,
@@ -119,7 +127,6 @@ function App() {
           isUser: false
         }]);
 
-        // Reset fail count on success
         setFailCount(0);
       } catch (error) {
         console.error('Conversation loop error:', error);
@@ -131,33 +138,26 @@ function App() {
     }
   }, [bots]);
 
-  // Start conversation loop when bots are loaded
   useEffect(() => {
     if (bots.length > 0) {
       conversationLoop();
     }
-  }, [bots.length]); // Only run once when bots load
+  }, [bots.length]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!input.trim()) return;
-
-    // Add user message
     setMessages(prev => [...prev, {
       id: Date.now(),
       text: input.trim(),
       isUser: true
     }]);
-
     setInput('');
   };
 
   const toggleRunning = () => {
     setIsRunning(prev => !prev);
-    // Reset circuit breaker when manually resuming
-    if (!isRunning) {
-      setFailCount(0);
-    }
+    if (!isRunning) setFailCount(0);
   };
 
   const currentTypingBot = bots.find(b => b.id === typingBot);
@@ -195,23 +195,31 @@ function App() {
             </div>
           )}
 
-          {messages.map(msg => (
-            <div
-              key={msg.id}
-              className={`message ${msg.isUser ? 'user-message' : 'bot-message'}`}
-              style={!msg.isUser ? { borderLeftColor: msg.botColor } : {}}
-            >
-              {!msg.isUser && (
-                <div className="message-header">
-                  <span className="bot-avatar">{msg.botAvatar}</span>
-                  <span className="bot-name" style={{ color: msg.botColor }}>
-                    {msg.botName}
-                  </span>
-                </div>
-              )}
-              <div className="message-text">{renderMessageContent(msg.text)}</div>
-            </div>
-          ))}
+          {messages.map(msg => {
+            const { text, imageUrls } = parseMessageParts(msg.text);
+            return (
+              <div
+                key={msg.id}
+                className={`message ${msg.isUser ? 'user-message' : 'bot-message'}`}
+                style={!msg.isUser ? { borderLeftColor: msg.botColor } : {}}
+              >
+                {!msg.isUser && (
+                  <div className="message-header">
+                    <span className="bot-avatar">{msg.botAvatar}</span>
+                    <span className="bot-name" style={{ color: msg.botColor }}>
+                      {msg.botName}
+                    </span>
+                  </div>
+                )}
+                {text && <div className="message-text">{text}</div>}
+                {imageUrls.length > 0 && (
+                  <div className="chat-image-group">
+                    {imageUrls.map((url, i) => <ChatImage key={i} src={url} />)}
+                  </div>
+                )}
+              </div>
+            );
+          })}
 
           {isTyping && currentTypingBot && (
             <div
