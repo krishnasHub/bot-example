@@ -1,0 +1,13 @@
+{
+  "name": "bots-group-chat",
+  "version": "1.0.0",
+  "description": "Multi-bot group chat where AI bots autonomously converse",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "npm run dev --prefix server",
+    "client": "npm run dev --prefix client"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
